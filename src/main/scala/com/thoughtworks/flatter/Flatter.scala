@@ -2,6 +2,7 @@ package com.thoughtworks.flatter
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
+import com.dongxiguo.fastring.Fastring.Implicits._
 
 /**
   * Created by yqjfeng on 5/19/16.
@@ -38,10 +39,12 @@ object Flatter {
     nestedDataFrame(flattenDataFrame, implicitly[Encoder[A]].schema).as[A]
   }
 
-  def flattenSchema(hierarchicalSchema: StructType): StructType = {
+  def flattenSchema(hierarchicalSchema: StructType, prefix: Vector[String] = Vector.empty): StructType = {
     StructType(hierarchicalSchema.flatMap {
-      case StructField(_, dataType: StructType, _, _) => flattenSchema(dataType)
-      case f => Seq(f)
+      case StructField(name, dataType: StructType, _, _) =>
+        flattenSchema(dataType, prefix :+ name)
+      case StructField(name, dataType, nullable, metadata) =>
+        Seq(StructField(fast"${prefix.mkFastring(".")}.$name".toString, dataType, nullable, metadata))
     })
   }
 
