@@ -11,7 +11,7 @@ import resource.{DefaultManagedResource, ManagedResource, Resource}
   */
 class FlatterSpec extends FlatSpec with Matchers {
 
-  it should "flatten" in {
+  it should "become flatten" in {
     for (sc <- SharedSparkData.sparkContext; sqlContext = new SQLContext(sc)) {
       import sqlContext.implicits._
       val dataset = sqlContext.createDataset(
@@ -23,7 +23,7 @@ class FlatterSpec extends FlatSpec with Matchers {
       dataset.schema should not be(null)
       val treeDataframe = dataset.toDF
       treeDataframe.schema should not be(null)
-      val flattenDataframe = Flatter.flatten(treeDataframe)
+      val flattenDataframe = Flatter.flattenDataFrame(treeDataframe)
       val allRows = flattenDataframe.collect()
       allRows should have length (2)
       flattenDataframe.schema.fields should have length (4)
@@ -41,26 +41,26 @@ class FlatterSpec extends FlatSpec with Matchers {
 
   }
 
-  it should "unflatten" in {
+  it should "become nested" in {
     for (sc <- SharedSparkData.sparkContext; sqlContext = new SQLContext(sc)) {
       import sqlContext.implicits._
 
-      val treeSchema = implicitly[Encoder[Root]].schema
-      val flattenSchema = Flatter.flattenSchema(treeSchema)
+      val nestedSchema = implicitly[Encoder[Root]].schema
+      val flattenSchema = Flatter.flattenSchema(nestedSchema)
 
       val flattenDataframe = sqlContext.createDataFrame(
         sc.makeRDD(
-          List(
+          Seq(
             Row(123, "foo", 0.123, 1000000000000000L),
             Row(345, "bar", 2.88, -1L)
           )
         ),
         flattenSchema)
 
-      val treeDataframe = Flatter.unflatten(flattenDataframe, treeSchema)
-      treeDataframe.schema.fields should have length (2)
+      val nestedDataframe = Flatter.nestedDataFrame(flattenDataframe, nestedSchema)
+      nestedDataframe.schema.fields should have length (3)
 
-      val dataset = treeDataframe.as[Root]
+      val dataset = nestedDataframe.as[Root]
       val allRows = dataset.collect()
       allRows should have length (2)
 
