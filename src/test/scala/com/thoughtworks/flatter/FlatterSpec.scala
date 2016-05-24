@@ -96,6 +96,7 @@ object FlatterSpec {
 
     private def conf = new SparkConf().setAppName("Spark App").setMaster("local[2]")
 
+    // FIXME: Remove the following `shared` method once https://github.com/jsuereth/scala-arm/pull/46 is accepted and published
     /**
       * Creates a [[ManagedResource]] that shared by all users for any type with a [[Resource]] type class implementation.
       *
