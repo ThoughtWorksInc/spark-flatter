@@ -1,4 +1,4 @@
-scalaVersion := "2.10.6"
+crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8")
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.1" % Provided
 
