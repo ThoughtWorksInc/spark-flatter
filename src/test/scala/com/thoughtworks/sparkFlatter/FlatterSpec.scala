@@ -1,7 +1,7 @@
-package com.thoughtworks.flatter
+package com.thoughtworks.sparkFlatter
 
 import org.scalatest._
-import com.thoughtworks.flatter.FlatterSpec.{SharedSparkData}
+import com.thoughtworks.sparkFlatter.FlatterSpec.{SharedSparkData}
 import org.apache.spark.sql.{Encoder, Row, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import resource.{DefaultManagedResource, ManagedResource, Resource}

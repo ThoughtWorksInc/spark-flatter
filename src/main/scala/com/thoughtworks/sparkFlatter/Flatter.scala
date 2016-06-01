@@ -1,4 +1,4 @@
-package com.thoughtworks.flatter
+package com.thoughtworks.sparkFlatter
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
