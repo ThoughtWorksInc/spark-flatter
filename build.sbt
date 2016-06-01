@@ -14,4 +14,4 @@ libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4" % Test
 
 libraryDependencies += "com.dongxiguo" %% "fastring" % "0.2.4"
 
-organization in ThisBuild := "com.thoughtworks.sparkFlatter"
+organization in ThisBuild := "com.thoughtworks.spark-flatter"
