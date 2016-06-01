@@ -49,10 +49,22 @@ object Flatter {
   }
 
   private def flattenValues(hierarchicalRow: Row, hierarchicalSchema: StructType): Seq[Any] = {
-    (0 until hierarchicalRow.length).flatMap { i =>
+    (0 until hierarchicalSchema.length).flatMap { i =>
       hierarchicalSchema(i) match {
-        case StructField(_, dataType: StructType, _, _) => flattenValues(hierarchicalRow.getStruct(i), dataType)
-        case f => Seq(hierarchicalRow.get(i))
+        case StructField(_, dataType: StructType, _, _) =>
+          val value = if (hierarchicalRow == null) {
+            null
+          } else {
+            hierarchicalRow.getStruct(i)
+          }
+          flattenValues(value, dataType)
+        case f =>
+          val value = if (hierarchicalRow == null) {
+            null
+          } else {
+            hierarchicalRow.get(i)
+          }
+          Seq(value)
       }
     }
   }
