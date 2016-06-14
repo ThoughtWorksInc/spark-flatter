@@ -44,7 +44,7 @@ object Flatter {
       case StructField(name, dataType: StructType, _, _) =>
         flattenSchema(dataType, prefix :+ name)
       case StructField(name, dataType, nullable, metadata) =>
-        Seq(StructField(fast"${prefix.mkFastring("$")}.$name".toString, dataType, nullable, metadata))
+        Seq(StructField(fast"${prefix.mkFastring("/")}/$name".toString, dataType, nullable, metadata))
     })
   }
 
