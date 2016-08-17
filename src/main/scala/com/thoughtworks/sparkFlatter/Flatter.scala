@@ -84,7 +84,7 @@ object Flatter {
     )
   }
 
-  def flatten[A: Encoder](dataset: Dataset[A]): DataFrame = {
+  def flatten(dataset: Dataset[_]): DataFrame = {
     flattenDataFrame(dataset.toDF)
   }
 
