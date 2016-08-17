@@ -1,15 +1,38 @@
 package com.thoughtworks.sparkFlatter
 
+
+import com.thoughtworks.sparkFlatter.EnumType.{EnumValue1, EnumValue2}
+
+import scala.reflect.runtime.universe.TypeTag
 import org.scalatest._
-import com.thoughtworks.sparkFlatter.FlatterSpec.{SharedSparkData}
+import com.thoughtworks.sparkFlatter.FlatterSpec.SharedSparkData
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Encoder, Row, SQLContext}
+import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.{SparkConf, SparkContext}
 import resource.{DefaultManagedResource, ManagedResource, Resource}
+
 
 /**
   * Created by yqjfeng on 5/19/16.
   */
 class FlatterSpec extends FlatSpec with Matchers {
+
+  it should "Dataset of enum" in {
+    for (sc <- SharedSparkData.sparkContext; sqlContext = new SQLContext(sc)) {
+      import sqlContext.implicits._
+
+      val dataset = sqlContext.createDataset(
+        Seq(
+          EnumRow(EnumValue1),
+          EnumRow(EnumValue2)
+        )
+      )
+      print(dataset.schema)
+      dataset.schema should not be (null)
+
+    }
+  }
 
   it should "become flatten" in {
     for (sc <- SharedSparkData.sparkContext; sqlContext = new SQLContext(sc)) {
@@ -20,9 +43,9 @@ class FlatterSpec extends FlatSpec with Matchers {
           Root(Section1(345, "bar"), 2.88, Section2(-1L))
         )
       )
-      dataset.schema should not be(null)
+      dataset.schema should not be (null)
       val treeDataframe = dataset.toDF
-      treeDataframe.schema should not be(null)
+      treeDataframe.schema should not be (null)
       val flattenDataframe = Flatter.flattenDataFrame(treeDataframe)
       val allRows = flattenDataframe.collect()
       allRows should have length (2)
@@ -85,6 +108,112 @@ final case class Root(section1: Section1, doubleField: Double, section2: Section
 final case class Section1(intField: Int, stringField: String)
 
 final case class Section2(longField: Long)
+
+//
+//class EnumTypeMetadata[A] extends UserDefinedType[EnumType] {
+//  override def sqlType: DataType = StringType
+//
+//  override def serialize(obj: Any): Any = {
+//    obj.toString
+//  }
+//
+//  override def userClass = classOf[EnumType]
+//
+//  override def deserialize(datum: Any): EnumType = {
+//    datum match {
+//      case "EnumValue1" => EnumValue1
+//      case "EnumValue2" => EnumValue2
+//    }
+//  }
+//}
+//
+//object UserDefinedTypeProxyFactory {
+//
+//  def createProxy[EnumTrait: TypeTag]: Class[UserDefinedType[EnumType]] = {
+//    import scala.reflect.runtime.universe._
+//    val enumType = typeOf[EnumTrait]
+//    val enumTypeTree = TypeTree(enumType)
+//    val code =
+//
+//    import scala.tools.reflect.ToolBox
+//    val toolBox = scala.reflect.runtime.currentMirror.mkToolBox()
+//    toolBox.eval(code).asInstanceOf[Class[UserDefinedType[EnumType]]]
+//  }
+//
+//}
+
+class UserDefinedTrait[T: TypeTag : Manifest] extends UserDefinedType[T] {
+  override def sqlType: DataType = StringType
+
+  override def serialize(obj: Any): Any = UTF8String.fromString(obj.toString)
+
+  override val userClass: Class[T] = manifest[T].runtimeClass.asInstanceOf[Class[T]]
+
+  private val moduleInstances = {
+    import scala.reflect.runtime.universe._
+    (for {
+      subclass <- typeOf[T].typeSymbol.asClass.knownDirectSubclasses
+      if subclass.isModuleClass
+    } yield {
+      val module = subclass.owner.typeSignature.member(subclass.name.toTermName).asModule
+      subclass.name.toString -> runtimeMirror(this.getClass.getClassLoader).reflectModule(module).asInstanceOf[T]
+    })(collection.breakOut(Map.canBuildFrom))
+  }
+
+  override def deserialize(datum: Any): T = {
+    moduleInstances(datum.toString)
+  }
+
+}
+
+class RowUdt extends UserDefinedType[EnumRow] {
+  type T = EnumRow
+  override def sqlType: DataType = {
+    import org.apache.spark.sql.catalyst.ScalaReflection._
+    import scala.reflect.runtime.universe._
+    val params = getConstructorParameters(typeOf[EnumRow])
+
+    StructType(
+          params.map { case (fieldName, fieldType) =>
+            val Schema(dataType, nullable) = schemaFor(fieldType)
+            StructField(fieldName, dataType, nullable)
+          })
+          throw new Exception
+  }
+
+  override def serialize(obj: Any): Any = {
+    UTF8String.fromString(obj.toString)
+        throw new Exception
+      }
+
+  override val userClass: Class[T] = classOf[EnumRow]
+
+
+
+  override def deserialize(datum: Any): T = {
+
+    EnumRow(EnumValue1)
+    throw new Exception
+    }
+
+}
+
+@SQLUserDefinedType(udt = classOf[EnumTypeUdt])
+sealed trait EnumType
+
+object EnumType {
+
+  final case object EnumValue1 extends EnumType
+
+  final case object EnumValue2 extends EnumType
+
+}
+
+class EnumTypeUdt extends UserDefinedTrait[EnumType]
+
+
+@SQLUserDefinedType(udt = classOf[RowUdt])
+final case class EnumRow(enum: EnumType)
 
 object FlatterSpec {
 
