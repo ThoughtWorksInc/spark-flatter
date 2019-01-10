@@ -5,4 +5,4 @@ A library that converts between nested DataSets and flatten DataFrames
 
 ## Links
 
-* [API Documentation](https://oss.sonatype.org/service/local/repositories/releases/archive/com/thoughtworks/spark-flatter/spark-flatter_2.11/2.0.0/spark-flatter_2.11-2.0.0-javadoc.jar/!/com/thoughtworks/sparkFlatter/Flatter$.html)
+* [API Documentation](https://javadoc.io/page/com.thoughtworks.spark-flatter/spark-flatter_2.11/latest/com/thoughtworks/sparkFlatter/Flatter%24.html)
